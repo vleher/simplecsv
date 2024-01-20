@@ -10,7 +10,13 @@ fn test_from_file(path: &str, file_name: &str, has_header: bool) {
     let input_file_name = path.to_string() + file_name;
     let output_file_name = path.to_string() + "output-" + file_name;
 
-    let csv = parse_from_file(&input_file_name, has_header).unwrap();
+    let csv = parse_from_file(&input_file_name, has_header);
+    let csv = match csv {
+        Ok(c) => c,
+        Err(_error) => {
+            panic!("Could not find input file name ");
+        }
+    };
     let res = csv.save_to_file(&output_file_name);
     println!("{res:?}");
     assert!(res.is_ok());
