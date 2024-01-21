@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::BufWriter;
+
 use simplecsv::parse_from_file;
 
 #[test]
@@ -114,7 +117,7 @@ fn test_create_new_file() {
         .separator(',')
         .build();
 
-    let res = csv_file.save_to_file("tests/files/new_file.csv");
+    let res = csv_file.save_to_file("tests/files/output-new_file.csv");
 
     assert!(res.is_ok())
 }
@@ -129,7 +132,21 @@ fn test_new_file_with_custom() {
         .separator(':')
         .build();
 
-    let res = csv_file.save_to_file("tests/files/new_file.csv");
+    let res = csv_file.save_to_file("tests/files/output-new_file.csv");
+
+    assert!(res.is_ok())
+}
+
+#[test]
+fn test_new_file_to_writer() {
+    let new_csv = simplecsv::new_csv_builder();
+    let csv_file = new_csv
+        .header(String::from("hhh,ttt,ooo"))
+        .row(String::from("t,hz,o,t"))
+        .build();
+
+    let csv_writer = BufWriter::new(File::create("tests/files/output-new-writer.csv").unwrap());
+    let res = csv_file.save_to_writer(csv_writer);
 
     assert!(res.is_ok())
 }

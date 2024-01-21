@@ -9,11 +9,13 @@ pub struct CSVFile {
 }
 
 impl CSVFile {
-    pub fn get_value_by_name(&self, header_name: &String, row_index: usize) -> Option<String> {
+    // Get the value in a cell from its row index and the header name
+    pub fn get_value_by_name(&self, row_index: usize, header_name: &String) -> Option<String> {
         let col_index = self.header.iter().position(|x| x.eq(header_name))?;
         self.get_value_by_index(row_index, col_index)
     }
 
+    // Get the value in a cell from its row and column index
     pub fn get_value_by_index(&self, row_index: usize, col_index: usize) -> Option<String> {
         let value = &self.data.get(row_index);
         match value {
@@ -22,42 +24,43 @@ impl CSVFile {
         }
     }
 
-    pub fn set_value_by_index(
-        &mut self,
-        row_index: usize,
-        col_index: usize,
-        value: String,
-    ) -> Result<bool, &str> {
-        if self.get_value_by_index(row_index, col_index).is_none() {
-            return Err("Out of bounds");
-        }
-        self.data[row_index][col_index] = value;
-        Ok(true)
-    }
-
+    // Update the value in a cell with the row index and header name
     pub fn set_value_by_name(
         &mut self,
         row_index: usize,
         header_name: &String,
         value: String,
-    ) -> Result<bool, &str> {
-        if self.get_value_by_name(header_name, row_index).is_none() {
+    ) -> Result<String, &str> {
+        if self.get_value_by_name(row_index, header_name).is_none() {
             return Err("Out of bounds");
         }
         let col_index = self.header.iter().position(|x| x.eq(header_name));
         match col_index {
             Some(i) => {
-                self.data[row_index][i] = value;
-                Ok(true)
+                let prev_value = std::mem::replace(&mut self.data[row_index][i], value);
+                Ok(prev_value)
             }
             None => Err("Out of bounds"),
         }
     }
 
-    pub fn save_to_file(&self, file_name: &str) -> Result<bool, std::io::Error> {
-        let file = File::create(file_name)?;
-        let mut csv_writer = BufWriter::new(file);
+    // Update the value in a cell with the row and column index
+    pub fn set_value_by_index(
+        &mut self,
+        row_index: usize,
+        col_index: usize,
+        value: String,
+    ) -> Result<String, &str> {
+        if self.get_value_by_index(row_index, col_index).is_none() {
+            return Err("Out of bounds");
+        }
+        let prev_value = std::mem::replace(&mut self.data[row_index][col_index], value);
+        Ok(prev_value)
+    }
 
+    // Save or Write to a Writer
+    pub fn save_to_writer(&self, csv_writer: BufWriter<File>) -> Result<bool, std::io::Error> {
+        let mut csv_writer = csv_writer;
         let header: String = self
             .header
             .iter()
@@ -89,6 +92,13 @@ impl CSVFile {
         }
 
         Ok(true)
+    }
+
+    // Save the output to a file
+    pub fn save_to_file(&self, file_name: &str) -> Result<bool, std::io::Error> {
+        let file = File::create(file_name)?;
+        let csv_writer = BufWriter::new(file);
+        self.save_to_writer(csv_writer)
     }
 }
 
